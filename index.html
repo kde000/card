@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b1020" />
+<meta name="format-detection" content="telephone=no" />
+
+<!-- Нужно, чтобы «Добавить на экран Домой» открывалось без адресной строки -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+<!-- Превью при отправке ссылки в мессенджерах (замените на реальный домен) -->
+<meta property="og:type" content="profile" />
+<meta property="og:title" content="Визитка" />
+<meta property="og:description" content="Нажмите, чтобы сохранить контакт" />
+
+<title>Визитка</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<main class="card">
+
+  <header class="head">
+    <div class="avatar" id="avatar" aria-hidden="true">…</div>
+    <h1 id="name">…</h1>
+    <p class="role" id="role"></p>
+    <p class="company" id="company"></p>
+  </header>
+
+  <button class="btn primary" id="save" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Zm0 12c4.42 0 8 2.24 8 5v1H4v-1c0-2.76 3.58-5 8-5Z"/></svg>
+    Сохранить контакт
+  </button>
+
+  <nav class="actions" id="actions" aria-label="Быстрые действия"></nav>
+
+  <section class="later">
+    <h2>Открыть страницу позже</h2>
+    <div class="later-grid">
+      <div class="qr-box">
+        <img id="qr" alt="QR-код: ссылка на эту страницу" hidden />
+        <div id="qr-fallback" class="qr-fallback">QR появится<br>после публикации</div>
+      </div>
+      <div class="later-text">
+        <p>Сохраните ссылку или отсканируйте QR — страница останется доступной в любой момент.</p>
+        <div class="later-buttons">
+          <button class="btn ghost" id="share" type="button">Поделиться</button>
+          <button class="btn ghost" id="copy" type="button">Копировать ссылку</button>
+        </div>
+        <p class="hint">Совет: на iPhone — «Поделиться → На экран «Домой»», на Android — меню браузера → «Добавить на главный экран».</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span id="foot-name"></span>
+  </footer>
+
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -114,6 +114,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .6; pointer-events: none; }
 .btn svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
 
 .btn.primary {

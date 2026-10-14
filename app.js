@@ -38,9 +38,38 @@
   // MAX — поддерживаем и строчный «max», и «MAX» на всякий случай
   function maxLink() { return C.max || C.MAX || ""; }
 
+  /* ---------- фото ---------- */
+
+  function loadImage(src) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error("photo: не удалось загрузить")); };
+      img.src = src;
+    });
+  }
+
+  // Уменьшает фото и возвращает base64 (без префикса data:image/jpeg;base64,)
+  function photoToBase64(src, max, quality) {
+    return loadImage(src).then(function (img) {
+      var w = img.naturalWidth || img.width;
+      var h = img.naturalHeight || img.height;
+      var k = Math.min(1, max / Math.max(w, h));
+      var canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(w * k));
+      canvas.height = Math.max(1, Math.round(h * k));
+      var ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // Упадёт, если картинка с чужого домена без CORS — вызывающий код это ловит
+      var dataUrl = canvas.toDataURL("image/jpeg", quality);
+      return dataUrl.split(",")[1] || null;
+    });
+  }
+
   /* ---------- сборка .vcf ---------- */
 
-  function buildVCard() {
+  function buildVCard(photoB64) {
     var L = [];
     L.push("BEGIN:VCARD");
     L.push("VERSION:3.0");
@@ -61,7 +90,12 @@
     if (maxLink()) L.push("X-SOCIALPROFILE;TYPE=max:" + esc(maxLink()));
     if (C.website) L.push("X-SOCIALPROFILE;TYPE=web:" + esc(C.website));
 
-    if (C.photo) L.push("PHOTO;VALUE=URI:" + esc(C.photo));
+    if (photoB64) {
+      // Встроенное фото — самый надёжный способ: работает и на iPhone, и на Android
+      L.push("PHOTO;ENCODING=b;TYPE=JPEG:" + photoB64);
+    } else if (C.photo) {
+      L.push("PHOTO;VALUE=URI:" + esc(C.photo));
+    }
     if (C.note) L.push("NOTE:" + esc(C.note));
 
     L.push("REV:" + new Date().toISOString().replace(/\.\d{3}/, ""));
@@ -78,8 +112,7 @@
 
   /* ---------- кнопка «Сохранить контакт» ---------- */
 
-  function saveContact() {
-    var data = buildVCard();
+  function downloadVCard(data) {
     var blob = new Blob([data], { type: "text/vcard;charset=utf-8" });
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
@@ -91,6 +124,24 @@
     a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
     toast("Открываю контакт…");
+  }
+
+  function saveContact() {
+    var btn = $("save");
+    var wantPhoto = !!(C.photo && C.photoInContact !== false);
+    if (btn) { btn.disabled = true; }
+
+    var prep = wantPhoto
+      ? photoToBase64(C.photo, 512, 0.82).catch(function () { return null; })
+      : Promise.resolve(null);
+
+    prep.then(function (b64) {
+      downloadVCard(buildVCard(b64));
+    }, function () {
+      downloadVCard(buildVCard(null));
+    }).then(function () {
+      if (btn) { btn.disabled = false; }
+    });
   }
 
   /* ---------- тост ---------- */
@@ -127,8 +178,9 @@
     if (C.photo) {
       av.innerHTML = "";
       var img = document.createElement("img");
-      img.src = C.photo;
       img.alt = "";
+      img.onerror = function () { av.textContent = initials(C.firstName, C.lastName); };
+      img.src = C.photo;
       av.appendChild(img);
     } else {
       av.textContent = initials(C.firstName, C.lastName);
